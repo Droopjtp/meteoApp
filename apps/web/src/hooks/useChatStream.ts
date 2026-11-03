@@ -26,7 +26,8 @@ export interface TurnError {
   message: string;
 }
 
-function applyEvent(turn: PendingTurn, event: ChatStreamEvent): PendingTurn {
+/** Pure reducer of the streamed events (unit-tested). */
+export function applyEvent(turn: PendingTurn, event: ChatStreamEvent): PendingTurn {
   switch (event.type) {
     case 'text': {
       const last = turn.parts.at(-1);
@@ -43,6 +44,7 @@ function applyEvent(turn: PendingTurn, event: ChatStreamEvent): PendingTurn {
       return {
         ...turn,
         tools: [...others, { id: event.id, label: event.label, status: event.status }],
+        textBreak: true,
       };
     }
     default:
@@ -116,3 +118,5 @@ export function useChatStream() {
 
   return { pending, error, send, stop, isStreaming: pending !== null };
 }
+
+export type ChatStream = ReturnType<typeof useChatStream>;
