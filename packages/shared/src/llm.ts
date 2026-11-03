@@ -5,6 +5,7 @@ export const llmErrorCodeSchema = z.enum([
   'llm_credentials_invalid',
   'llm_rate_limited',
   'llm_unavailable',
+  'llm_refused',
 ]);
 
 export const llmStatusSchema = z.discriminatedUnion('status', [

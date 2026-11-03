@@ -1,0 +1,126 @@
+.figure {
+  margin: 0;
+  padding: 16px 16px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: #fff;
+}
+
+.title {
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lineKey {
+  display: inline-block;
+  flex: none;
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+.boxKey {
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.panel + .panel {
+  margin-top: 4px;
+}
+
+.panelUnit {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.tooltip {
+  min-width: 160px;
+  padding: 8px 10px;
+  border: 1px solid rgba(11, 11, 11, 0.1);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(11, 11, 11, 0.08);
+  font-size: 0.8rem;
+}
+
+.tooltipTime {
+  margin-bottom: 4px;
+  color: var(--color-text-muted);
+}
+
+.tooltipRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.6;
+}
+
+.tooltipValue {
+  font-variant-numeric: tabular-nums;
+}
+
+.tooltipLabel {
+  color: var(--color-text-muted);
+}
+
+.tableToggle {
+  margin-top: 8px;
+  font-size: 0.8rem;
+}
+
+.tableToggle summary {
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.tableScroll {
+  max-height: 240px;
+  margin-top: 8px;
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.table th:first-child {
+  text-align: left;
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  font-weight: 600;
+}

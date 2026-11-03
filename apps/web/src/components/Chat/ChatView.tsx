@@ -1,0 +1,105 @@
+import { useEffect, useRef } from 'react';
+import { useChat, useCreateChat } from '../../api/chats';
+import { useLlmStatus } from '../../api/llm';
+import { type ToolStatus, useChatStream } from '../../hooks/useChatStream';
+import styles from './Chat.module.css';
+import { Composer } from './Composer';
+import { EmptyState } from './EmptyState';
+import { Message } from './Message';
+
+interface ChatViewProps {
+  chatId: string | null;
+  navigate: (chatId: string | null) => void;
+}
+
+function ToolStatuses({ tools }: { tools: ToolStatus[] }) {
+  return (
+    <ul className={styles.tools} aria-live="polite">
+      {tools.map((tool) => (
+        <li key={tool.id} className={styles.tool} data-status={tool.status}>
+          <span className={styles.toolDot} aria-hidden />
+          {tool.label}
+          {tool.status === 'error' && ' — indisponible'}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function ChatView({ chatId, navigate }: ChatViewProps) {
+  const { data, isError, isPending: isLoading } = useChat(chatId);
+  const createChat = useCreateChat();
+  const { pending, error, send, stop } = useChatStream();
+  const llmStatus = useLlmStatus();
+  const endRef = useRef<HTMLDivElement>(null);
+
+  const visiblePending = pending?.chatId === chatId ? pending : null;
+  const visibleError = error?.chatId === chatId ? error : null;
+  const messages = chatId ? (data?.messages ?? []) : [];
+
+  // Leaving a chat while it streams: stop generating (the server stops too).
+  useEffect(() => {
+    if (pending && pending.chatId !== chatId) stop();
+  }, [chatId, pending, stop]);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ block: 'end' });
+  }, [messages.length, visiblePending, visibleError]);
+
+  const handleSend = async (text: string) => {
+    let targetId = chatId;
+    if (!targetId) {
+      const chat = await createChat.mutateAsync();
+      targetId = chat.id;
+      navigate(targetId);
+    }
+    void send(targetId, text);
+  };
+
+  // Don't flash the welcome screen while an existing chat loads.
+  const isEmpty = messages.length === 0 && !visiblePending && !(chatId && isLoading);
+  const llmUnavailable = llmStatus.data?.status === 'error';
+
+  return (
+    <div className={styles.chat}>
+      <div className={styles.scroll}>
+        {isError && <p className={styles.error}>Conversation introuvable.</p>}
+        {isEmpty && !isError ? (
+          <EmptyState onPick={handleSend} disabled={llmUnavailable} />
+        ) : (
+          <div className={styles.messages}>
+            {messages.map((message) => (
+              <Message key={message.id} role={message.role} parts={message.parts} />
+            ))}
+            {visiblePending && (
+              <>
+                <Message role="user" parts={[{ type: 'text', text: visiblePending.userText }]} />
+                <div className={styles.assistantMessage}>
+                  {visiblePending.tools.length > 0 && <ToolStatuses tools={visiblePending.tools} />}
+                  {visiblePending.parts.length === 0 &&
+                    visiblePending.tools.every((t) => t.status !== 'running') && (
+                      <p className={styles.thinking}>Réflexion…</p>
+                    )}
+                </div>
+                <Message role="assistant" parts={visiblePending.parts} />
+              </>
+            )}
+            {visibleError && (
+              <p role="alert" className={styles.error}>
+                {visibleError.message}
+              </p>
+            )}
+          </div>
+        )}
+        <div ref={endRef} />
+      </div>
+
+      <Composer
+        onSend={handleSend}
+        onStop={stop}
+        isStreaming={visiblePending !== null}
+        disabled={llmUnavailable || createChat.isPending}
+      />
+    </div>
+  );
+}

@@ -7,6 +7,9 @@ const envSchema = z.object({
   HOST: z.string().default('0.0.0.0'),
   PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z.url(),
+  LLM_MODEL: z.string().min(1).default('claude-opus-5-5'),
+  // Low effort keeps chat latency down: fetching and charting weather is not a hard reasoning task.
+  LLM_EFFORT: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).default('low'),
 });
 
 export type Config = z.infer<typeof envSchema>;

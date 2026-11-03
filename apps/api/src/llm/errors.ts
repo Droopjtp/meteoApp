@@ -8,6 +8,7 @@ const MESSAGES: Record<LlmErrorCode, string> = {
     'Les identifiants Anthropic ont été refusés (invalides, expirés ou sans accès au modèle). Vérifiez ANTHROPIC_API_KEY / ANTHROPIC_AUTH_TOKEN ou relancez `ant auth login`.',
   llm_rate_limited: 'Le service LLM est momentanément saturé. Réessayez dans quelques instants.',
   llm_unavailable: 'Le service LLM est injoignable pour le moment. Réessayez plus tard.',
+  llm_refused: 'Le modèle a refusé de traiter cette demande. Essayez de la reformuler.',
 };
 
 const STATUS_CODES: Record<LlmErrorCode, number> = {
@@ -15,6 +16,7 @@ const STATUS_CODES: Record<LlmErrorCode, number> = {
   llm_credentials_invalid: 503,
   llm_rate_limited: 429,
   llm_unavailable: 502,
+  llm_refused: 422,
 };
 
 export class LlmError extends Error {
@@ -32,14 +34,19 @@ export class LlmError extends Error {
 
 /**
  * The SDK throws a plain Error (not an AnthropicError) when no credential source
- * resolves: API key, auth token, or `ant auth login` profile.
+ * resolves: API key, auth token, or `ant auth login` profile. Streaming helpers wrap it
+ * in an AnthropicError, so the cause chain is walked.
  */
 function isMissingCredentialsError(error: unknown): boolean {
-  return (
-    error instanceof Error &&
-    !(error instanceof Anthropic.AnthropicError) &&
-    error.message.startsWith('Could not resolve authentication method')
-  );
+  for (let current = error; current instanceof Error; current = current.cause) {
+    if (
+      !(current instanceof Anthropic.AnthropicError) &&
+      current.message.startsWith('Could not resolve authentication method')
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /** Maps an Anthropic SDK error to a domain error, or returns null if it is not LLM-related. */

@@ -10,6 +10,7 @@ import type { Config } from './config.js';
 import type { Db } from './db/client.js';
 import { createLlmStatusChecker } from './llm/client.js';
 import { toLlmError } from './llm/errors.js';
+import { chatRoutes } from './routes/chats.js';
 import { healthRoutes } from './routes/health.js';
 import { llmRoutes } from './routes/llm.js';
 
@@ -48,6 +49,7 @@ export function buildApp({ config, db, llm }: { config: Config; db: Db; llm: Ant
 
   app.register(healthRoutes, { prefix: '/api' });
   app.register(llmRoutes, { prefix: '/api' });
+  app.register(chatRoutes, { prefix: '/api' });
 
   return app;
 }

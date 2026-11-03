@@ -8,6 +8,20 @@
       "when": 1793715019120,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793716982319,
+      "tag": "0001_datasets_and_charts",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793717044810,
+      "tag": "0002_messages_seq",
+      "breakpoints": true
     }
   ]
 }

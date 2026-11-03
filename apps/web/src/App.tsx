@@ -1,19 +1,18 @@
 import styles from './App.module.css';
+import { ChatView } from './components/Chat/ChatView';
 import { LlmStatusBanner } from './components/LlmStatusBanner/LlmStatusBanner';
+import { Sidebar } from './components/Sidebar/Sidebar';
+import { useChatRoute } from './hooks/useChatRoute';
 
 export function App() {
+  const { chatId, navigate } = useChatRoute();
+
   return (
     <div className={styles.layout}>
-      <aside className={styles.sidebar}>
-        <button type="button" className={styles.newChat}>
-          + Nouvelle conversation
-        </button>
-      </aside>
+      <Sidebar activeChatId={chatId} onSelect={navigate} />
       <main className={styles.main}>
         <LlmStatusBanner />
-        <div className={styles.empty}>
-          <p className={styles.placeholder}>Demandez-moi la météo, n'importe où.</p>
-        </div>
+        <ChatView chatId={chatId} navigate={navigate} />
       </main>
     </div>
   );

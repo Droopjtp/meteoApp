@@ -18,6 +18,23 @@ describe('toLlmError', () => {
     expect(toLlmError(error)?.code).toBe('llm_credentials_missing');
   });
 
+  it('detects missing credentials wrapped by the streaming helper', async () => {
+    vi.stubEnv('ANTHROPIC_API_KEY', '');
+    vi.stubEnv('ANTHROPIC_AUTH_TOKEN', '');
+    vi.stubEnv('ANTHROPIC_CONFIG_DIR', '/nonexistent');
+    vi.stubEnv('HOME', '/nonexistent');
+
+    const stream = new Anthropic().beta.messages.stream({
+      model: 'claude-opus-5-5',
+      max_tokens: 10,
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+    const error = await stream.finalMessage().catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(Anthropic.AnthropicError);
+    expect(toLlmError(error)?.code).toBe('llm_credentials_missing');
+  });
+
   it.each([
     [
       new Anthropic.AuthenticationError(401, undefined, 'bad key', headers),
