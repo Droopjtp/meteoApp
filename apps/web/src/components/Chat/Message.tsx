@@ -1,9 +1,7 @@
 import type { MessagePart } from '@meteo/shared';
-import { lazy, memo, Suspense } from 'react';
+import { memo, Suspense } from 'react';
+import { LazyWeatherChart } from '../WeatherChart/lazy';
 import styles from './Chat.module.css';
-
-// Recharts is the heaviest dependency: load it only when a chart is shown.
-const WeatherChart = lazy(() => import('../WeatherChart/WeatherChart'));
 
 /** The prompt asks for plain text; render stray **bold** anyway rather than showing asterisks. */
 function RichText({ text }: { text: string }) {
@@ -27,7 +25,7 @@ function MessageImpl({ role, parts }: MessageProps) {
           </p>
         ) : (
           <Suspense key={part.chart.id} fallback={<div className={styles.chartPlaceholder} />}>
-            <WeatherChart chart={part.chart} />
+            <LazyWeatherChart chart={part.chart} />
           </Suspense>
         ),
       )}

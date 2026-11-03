@@ -31,7 +31,8 @@ React ──POST /api/chats/:id/messages──▶ Fastify ──stream──▶ 
 - Open-Meteo responses cached in memory (forecast 15 min, archive 6 h, geocoding 24 h)
 - Parallel tool calls (one `get_weather` per city run concurrently)
 - Prompt caching on tools + system prompt + history; low LLM effort by default (`LLM_EFFORT`)
-- Recharts lazy-loaded in its own chunk; messages memoised so only the streaming one re-renders
+- Initial bundle ~84 kB gzip: Recharts lives in its own chunk, preloaded while the browser is idle; the front imports only the shared _types_ (responses are validated server-side), which keeps Zod out of the bundle
+- Messages memoised so only the streaming one re-renders
 - nginx: gzip, immutable caching of hashed assets, unbuffered proxy for SSE
 
 ## Stack

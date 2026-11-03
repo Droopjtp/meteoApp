@@ -1,6 +1,5 @@
-import { chatDetailSchema, chatSummarySchema } from '@meteo/shared';
+import type { ChatDetail, ChatSummary } from '@meteo/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { z } from 'zod';
 import { requestJson, toHttpError } from './http';
 
 export const chatKeys = {
@@ -11,14 +10,14 @@ export const chatKeys = {
 export function useChats() {
   return useQuery({
     queryKey: chatKeys.list,
-    queryFn: () => requestJson('/api/chats', z.array(chatSummarySchema)),
+    queryFn: () => requestJson<ChatSummary[]>('/api/chats'),
   });
 }
 
 export function useChat(chatId: string | null) {
   return useQuery({
     queryKey: chatKeys.detail(chatId ?? ''),
-    queryFn: () => requestJson(`/api/chats/${chatId}`, chatDetailSchema),
+    queryFn: () => requestJson<ChatDetail>(`/api/chats/${chatId}`),
     enabled: chatId !== null,
   });
 }
@@ -26,7 +25,7 @@ export function useChat(chatId: string | null) {
 export function useCreateChat() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => requestJson('/api/chats', chatSummarySchema, { method: 'POST' }),
+    mutationFn: () => requestJson<ChatSummary>('/api/chats', { method: 'POST' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: chatKeys.list, exact: true }),
   });
 }
