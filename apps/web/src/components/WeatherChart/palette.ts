@@ -17,6 +17,7 @@ export const CHART_INK = {
   grid: '#e1e0d9',
   axis: '#c3c2b7',
   muted: '#898781',
+  secondary: '#52514e',
   surface: '#ffffff',
 } as const;
 

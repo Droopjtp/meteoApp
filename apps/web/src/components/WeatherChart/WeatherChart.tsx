@@ -6,12 +6,20 @@ import {
   CartesianGrid,
   ComposedChart,
   Line,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
-import { formatAxisValue, formatTick, formatTooltipTime, formatValue } from './format';
+import {
+  formatAxisValue,
+  formatTick,
+  formatTooltipTime,
+  formatValue,
+  hourlyTicks,
+  isMidnight,
+} from './format';
 import { CHART_INK, seriesColor } from './palette';
 import styles from './WeatherChart.module.css';
 
@@ -40,6 +48,33 @@ function ChartTooltip({ active, label, series, point, granularity }: TooltipProp
         </div>
       ))}
     </div>
+  );
+}
+
+interface TimeTickProps {
+  x?: number | string;
+  y?: number | string;
+  payload?: { value: string };
+  granularity: ResolvedChart['granularity'];
+  pointCount: number;
+}
+
+/** Midnight ticks carry the date: slightly stronger ink than the hours. */
+function TimeTick({ x, y, payload, granularity, pointCount }: TimeTickProps) {
+  if (!payload) return null;
+  const strong = granularity === 'hourly' && isMidnight(payload.value);
+  return (
+    <text
+      x={x}
+      y={y}
+      dy={12}
+      textAnchor="middle"
+      fontSize={12}
+      fill={strong ? CHART_INK.secondary : CHART_INK.muted}
+      fontWeight={strong ? 600 : 400}
+    >
+      {formatTick(payload.value, granularity, pointCount)}
+    </text>
   );
 }
 
@@ -145,7 +180,15 @@ function WeatherChartImpl({ chart }: { chart: ResolvedChart }) {
   );
 
   const panelHeight = panels.length > 1 ? 180 : 260;
-  const tickCount = chart.points.length;
+  const pointCount = chart.points.length;
+  const hourly = chart.granularity === 'hourly';
+  const times = useMemo(() => chart.points.map((p) => String(p.time)), [chart.points]);
+  const ticks = useMemo(() => (hourly ? hourlyTicks(times) : undefined), [hourly, times]);
+  // Day separators on hourly charts (the first day starts at the left edge).
+  const dayStarts = useMemo(
+    () => (hourly ? times.filter(isMidnight).slice(1) : []),
+    [hourly, times],
+  );
 
   return (
     <figure className={styles.figure}>
@@ -165,8 +208,11 @@ function WeatherChartImpl({ chart }: { chart: ResolvedChart }) {
               <XAxis
                 dataKey="time"
                 hide={index < panels.length - 1}
-                tickFormatter={(time: string) => formatTick(time, chart.granularity, tickCount)}
-                tick={{ fill: CHART_INK.muted, fontSize: 12 }}
+                ticks={ticks}
+                interval={hourly ? 0 : 'preserveEnd'}
+                tick={(props) => (
+                  <TimeTick {...props} granularity={chart.granularity} pointCount={pointCount} />
+                )}
                 stroke={CHART_INK.axis}
                 tickLine={false}
                 minTickGap={24}
@@ -190,6 +236,9 @@ function WeatherChartImpl({ chart }: { chart: ResolvedChart }) {
                   />
                 )}
               />
+              {dayStarts.map((time) => (
+                <ReferenceLine key={time} x={time} stroke={CHART_INK.grid} />
+              ))}
               {panelSeries.map((s) => (
                 <SeriesMark key={s.key} series={s} />
               ))}
