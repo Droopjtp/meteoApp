@@ -9,6 +9,7 @@ import {
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import {
+  appendMessages,
   createChat,
   deleteChat,
   findChat,
@@ -19,6 +20,12 @@ import {
 import { toUiMessages } from '../chats/transcript.js';
 import { runChatTurn } from '../llm/agent.js';
 import { toLlmError } from '../llm/errors.js';
+
+/**
+ * Stored as the answer to a stopped question: otherwise the LLM sees it unanswered
+ * and answers it along with the next message.
+ */
+const INTERRUPTED_TEXT = 'Réponse interrompue.';
 
 const notFound: ApiError = {
   error: { code: 'chat_not_found', message: 'Conversation introuvable.' },
@@ -110,6 +117,14 @@ export const chatRoutes: FastifyPluginAsyncZod = async (app) => {
       } catch (error) {
         if (abort.signal.aborted) {
           request.log.info({ chatId }, 'Chat turn aborted by the client');
+          // Turn steps are stored atomically, so the transcript ends with the user's message
+          // (or tool results) unless the answer completed just before the abort.
+          const last = (await getMessages(app.db, chatId)).at(-1);
+          if (last?.role === 'user') {
+            await appendMessages(app.db, chatId, [
+              { role: 'assistant', content: [{ type: 'text', text: INTERRUPTED_TEXT }] },
+            ]);
+          }
         } else {
           const llmError = toLlmError(error);
           if (llmError) {

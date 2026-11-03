@@ -94,6 +94,9 @@ export function useChatStream() {
         }
       } finally {
         if (frame !== null) cancelAnimationFrame(frame);
+        // On "stop", the server only learns about it when the connection closes, then stores
+        // the interrupted answer: give it a moment so the refetch includes it.
+        if (abort.signal.aborted) await new Promise((resolve) => setTimeout(resolve, 300));
         // The server persisted the turn: swap the optimistic view for the stored one.
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: chatKeys.detail(chatId) }),
