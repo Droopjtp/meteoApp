@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: meteo
+      POSTGRES_PASSWORD: meteo
+      POSTGRES_DB: meteo
+    ports:
+      - '5433:5432'
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U meteo -d meteo']
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgres://meteo:meteo@db:5432/meteo
+      # Optional: without credentials the app starts and the UI explains how to configure them.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_AUTH_TOKEN: ${ANTHROPIC_AUTH_TOKEN:-}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - '8080:80'
+    depends_on:
+      - api
+
+volumes:
+  db-data:

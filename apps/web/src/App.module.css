@@ -1,0 +1,43 @@
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  height: 100%;
+}
+
+.sidebar {
+  padding: 16px;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.newChat {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.newChat:hover {
+  background: var(--color-bg);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder {
+  color: var(--color-text-muted);
+}
