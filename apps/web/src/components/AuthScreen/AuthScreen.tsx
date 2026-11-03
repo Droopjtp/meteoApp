@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from 'react';
 import { authClient, authErrorMessage } from '../../auth/client';
+import { ThemeToggle } from '../ThemeToggle/ThemeToggle';
 import styles from './AuthScreen.module.css';
 
 type Mode = 'sign-in' | 'sign-up';
@@ -33,6 +34,7 @@ export function AuthScreen() {
 
   return (
     <main className={styles.screen}>
+      <ThemeToggle className={styles.themeToggle} />
       <div className={styles.card}>
         <h1 className={styles.title}>Météo Chat</h1>
         <p className={styles.subtitle}>Explorez la météo en langage naturel.</p>

@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from 'react';
 import { authClient, authErrorMessage } from '../../auth/client';
+import { setThemePreference, type ThemePreference, useTheme } from '../../theme/theme';
 import styles from './SettingsPage.module.css';
 
 interface SettingsPageProps {
@@ -123,6 +124,33 @@ function PasswordForm() {
   );
 }
 
+const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
+  { value: 'system', label: 'Système' },
+  { value: 'light', label: 'Clair' },
+  { value: 'dark', label: 'Sombre' },
+];
+
+function AppearanceForm() {
+  const { preference } = useTheme();
+  return (
+    <fieldset className={styles.segmented}>
+      <legend className={styles.srOnly}>Thème</legend>
+      {THEME_OPTIONS.map((option) => (
+        <label key={option.value} className={styles.segment}>
+          <input
+            type="radio"
+            name="theme"
+            value={option.value}
+            checked={preference === option.value}
+            onChange={() => setThemePreference(option.value)}
+          />
+          {option.label}
+        </label>
+      ))}
+    </fieldset>
+  );
+}
+
 const dateFormat = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' });
 
 export function SettingsPage({ user, onBack }: SettingsPageProps) {
@@ -145,6 +173,16 @@ export function SettingsPage({ user, onBack }: SettingsPageProps) {
             <dd>{dateFormat.format(new Date(user.createdAt))}</dd>
           </dl>
           <ProfileForm name={user.name} />
+        </section>
+
+        <section className={styles.card} aria-labelledby="appearance-heading">
+          <h2 id="appearance-heading" className={styles.cardTitle}>
+            Apparence
+          </h2>
+          <AppearanceForm />
+          <p className={styles.hint}>
+            « Système » suit le réglage clair ou sombre de votre appareil.
+          </p>
         </section>
 
         <section className={styles.card} aria-labelledby="password-heading">

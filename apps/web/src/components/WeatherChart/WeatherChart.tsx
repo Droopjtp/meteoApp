@@ -21,7 +21,8 @@ import {
   isMidnight,
 } from './format';
 import { useElementWidth } from '../../hooks/useElementWidth';
-import { CHART_INK, seriesColor } from './palette';
+import { useTheme } from '../../theme/theme';
+import { type ChartInk, chartInk, seriesColor } from './palette';
 import styles from './WeatherChart.module.css';
 
 type Series = ResolvedChart['series'][number] & { color: string };
@@ -59,10 +60,11 @@ interface TimeTickProps {
   granularity: ResolvedChart['granularity'];
   pointCount: number;
   compact: boolean;
+  ink: ChartInk;
 }
 
 /** Midnight ticks carry the date: slightly stronger ink than the hours. */
-function TimeTick({ x, y, payload, granularity, pointCount, compact }: TimeTickProps) {
+function TimeTick({ x, y, payload, granularity, pointCount, compact, ink }: TimeTickProps) {
   if (!payload) return null;
   const strong = granularity === 'hourly' && isMidnight(payload.value);
   return (
@@ -72,7 +74,7 @@ function TimeTick({ x, y, payload, granularity, pointCount, compact }: TimeTickP
       dy={12}
       textAnchor="middle"
       fontSize={12}
-      fill={strong ? CHART_INK.secondary : CHART_INK.muted}
+      fill={strong ? ink.secondary : ink.muted}
       fontWeight={strong ? 600 : 400}
     >
       {formatTick(payload.value, granularity, pointCount, compact)}
@@ -80,7 +82,7 @@ function TimeTick({ x, y, payload, granularity, pointCount, compact }: TimeTickP
   );
 }
 
-function SeriesMark({ series }: { series: Series }) {
+function SeriesMark({ series, ink }: { series: Series; ink: ChartInk }) {
   const common = { dataKey: series.key, name: series.label, isAnimationActive: false };
   switch (series.type) {
     case 'bar':
@@ -94,7 +96,7 @@ function SeriesMark({ series }: { series: Series }) {
           strokeWidth={2}
           fill={series.color}
           fillOpacity={0.1}
-          activeDot={{ r: 4, stroke: CHART_INK.surface, strokeWidth: 2 }}
+          activeDot={{ r: 4, stroke: ink.surface, strokeWidth: 2 }}
         />
       );
     default:
@@ -108,7 +110,7 @@ function SeriesMark({ series }: { series: Series }) {
           strokeLinejoin="round"
           dot={false}
           connectNulls
-          activeDot={{ r: 4, stroke: CHART_INK.surface, strokeWidth: 2 }}
+          activeDot={{ r: 4, stroke: ink.surface, strokeWidth: 2 }}
         />
       );
   }
@@ -167,9 +169,11 @@ function DataTable({ chart, series }: { chart: ResolvedChart; series: Series[] }
  * no dual Y axis, whose two scales would be arbitrary and misleading.
  */
 function WeatherChartImpl({ chart }: { chart: ResolvedChart }) {
+  const { theme } = useTheme();
+  const ink = chartInk(theme);
   const series = useMemo<Series[]>(
-    () => chart.series.map((s, index) => ({ ...s, color: seriesColor(index) })),
-    [chart.series],
+    () => chart.series.map((s, index) => ({ ...s, color: seriesColor(index, theme) })),
+    [chart.series, theme],
   );
   const panels = useMemo(() => {
     const byUnit = new Map<string, Series[]>();
@@ -213,7 +217,7 @@ function WeatherChartImpl({ chart }: { chart: ResolvedChart }) {
               syncId={chart.id}
               margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
             >
-              <CartesianGrid vertical={false} stroke={CHART_INK.grid} />
+              <CartesianGrid vertical={false} stroke={ink.grid} />
               <XAxis
                 dataKey="time"
                 hide={index < panels.length - 1}
@@ -225,21 +229,22 @@ function WeatherChartImpl({ chart }: { chart: ResolvedChart }) {
                     granularity={chart.granularity}
                     pointCount={pointCount}
                     compact={compact}
+                    ink={ink}
                   />
                 )}
-                stroke={CHART_INK.axis}
+                stroke={ink.axis}
                 tickLine={false}
                 minTickGap={24}
               />
               <YAxis
                 width={compact ? 36 : 48}
-                tick={{ fill: CHART_INK.muted, fontSize: 12 }}
+                tick={{ fill: ink.muted, fontSize: 12 }}
                 tickFormatter={formatAxisValue}
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip
-                cursor={{ stroke: CHART_INK.axis, strokeWidth: 1 }}
+                cursor={{ stroke: ink.axis, strokeWidth: 1 }}
                 content={({ active, label }) => (
                   <ChartTooltip
                     active={active}
@@ -251,10 +256,10 @@ function WeatherChartImpl({ chart }: { chart: ResolvedChart }) {
                 )}
               />
               {dayStarts.map((time) => (
-                <ReferenceLine key={time} x={time} stroke={CHART_INK.grid} />
+                <ReferenceLine key={time} x={time} stroke={ink.grid} />
               ))}
               {panelSeries.map((s) => (
-                <SeriesMark key={s.key} series={s} />
+                <SeriesMark key={s.key} series={s} ink={ink} />
               ))}
             </ComposedChart>
           </ResponsiveContainer>

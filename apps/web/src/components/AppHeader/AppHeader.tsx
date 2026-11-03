@@ -1,4 +1,5 @@
 import type { Ref } from 'react';
+import { ThemeToggle } from '../ThemeToggle/ThemeToggle';
 import styles from './AppHeader.module.css';
 
 interface AppHeaderProps {
@@ -48,6 +49,9 @@ export function AppHeader({
         <SidebarIcon />
       </button>
       <h1 className={styles.title}>{title}</h1>
+      <div className={styles.actions}>
+        <ThemeToggle />
+      </div>
     </header>
   );
 }

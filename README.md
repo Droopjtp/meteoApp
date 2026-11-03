@@ -11,6 +11,7 @@ Chat with an LLM about live weather data — answers come back as charts in the 
 - Out-of-range requests (beyond 16 days, before 1940, unknown place) handled gracefully: the LLM explains and suggests an alternative
 - Chat history: new chat, list, delete, deep links (`/c/:chatId`)
 - Accounts (email + password): each user only sees their own chats
+- Responsive (mobile drawer, collapsible sidebar) and light / dark theme (follows the system by default, no flash on load; charts use a dark palette validated for colour-vision deficiencies)
 
 ## How it works
 
