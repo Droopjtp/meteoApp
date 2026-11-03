@@ -6,6 +6,8 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
+import type { Auth } from './auth/auth.js';
+import { authRoutes } from './auth/routes.js';
 import type { Config } from './config.js';
 import type { Db } from './db/client.js';
 import { createLlmStatusChecker } from './llm/client.js';
@@ -19,11 +21,22 @@ declare module 'fastify' {
     db: Db;
     config: Config;
     llm: Anthropic;
+    auth: Auth;
     checkLlmStatus: () => Promise<LlmStatus>;
   }
 }
 
-export function buildApp({ config, db, llm }: { config: Config; db: Db; llm: Anthropic }) {
+export function buildApp({
+  config,
+  db,
+  llm,
+  auth,
+}: {
+  config: Config;
+  db: Db;
+  llm: Anthropic;
+  auth: Auth;
+}) {
   const app = Fastify({
     logger: config.NODE_ENV === 'development' ? { level: 'info' } : true,
   }).withTypeProvider<ZodTypeProvider>();
@@ -34,6 +47,8 @@ export function buildApp({ config, db, llm }: { config: Config; db: Db; llm: Ant
   app.decorate('config', config);
   app.decorate('db', db);
   app.decorate('llm', llm);
+  app.decorate('auth', auth);
+  app.decorateRequest('user', null);
   app.decorate('checkLlmStatus', createLlmStatusChecker(llm));
 
   app.setErrorHandler((error, request, reply) => {
@@ -48,6 +63,7 @@ export function buildApp({ config, db, llm }: { config: Config; db: Db; llm: Ant
   });
 
   app.register(healthRoutes, { prefix: '/api' });
+  app.register(authRoutes, { prefix: '/api' });
   app.register(llmRoutes, { prefix: '/api' });
   app.register(chatRoutes, { prefix: '/api' });
 

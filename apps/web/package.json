@@ -13,6 +13,7 @@
   "dependencies": {
     "@meteo/shared": "workspace:*",
     "@tanstack/react-query": "^5.105.2",
+    "better-auth": "^1.7.15",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "recharts": "^3.10.1"

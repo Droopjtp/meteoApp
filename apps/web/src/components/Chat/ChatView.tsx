@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useChat, useCreateChat } from '../../api/chats';
+import { HttpError } from '../../api/http';
 import { useLlmStatus } from '../../api/llm';
 import { type ToolStatus, useChatStream } from '../../hooks/useChatStream';
 import styles from './Chat.module.css';
@@ -49,8 +50,11 @@ export function ChatView({ chatId, navigate }: ChatViewProps) {
   const handleSend = async (text: string) => {
     let targetId = chatId;
     if (!targetId) {
-      const chat = await createChat.mutateAsync();
-      targetId = chat.id;
+      try {
+        targetId = (await createChat.mutateAsync()).id;
+      } catch {
+        return; // Shown below (a 401 sends the user back to the sign-in screen instead).
+      }
       navigate(targetId);
     }
     void send(targetId, text);
@@ -94,6 +98,12 @@ export function ChatView({ chatId, navigate }: ChatViewProps) {
         <div ref={endRef} />
       </div>
 
+      {createChat.error &&
+        !(createChat.error instanceof HttpError && createChat.error.status === 401) && (
+          <p role="alert" className={`${styles.error} ${styles.composerError}`}>
+            Impossible de créer la conversation : {createChat.error.message}
+          </p>
+        )}
       <Composer
         onSend={handleSend}
         onStop={stop}

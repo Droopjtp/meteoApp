@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { buildApp } from './app.js';
+import { createAuth } from './auth/auth.js';
 import { loadConfig } from './config.js';
 import { createDb, runMigrations } from './db/client.js';
 import { createLlmClient } from './llm/client.js';
@@ -10,7 +11,7 @@ const { db, pool } = createDb(config.DATABASE_URL);
 // Works both from src/ (tsx) and dist/ (bundled): migrations live at the package root.
 await runMigrations(db, fileURLToPath(new URL('../drizzle', import.meta.url)));
 
-const app = buildApp({ config, db, llm: createLlmClient() });
+const app = buildApp({ config, db, llm: createLlmClient(), auth: createAuth({ config, db }) });
 
 const shutdown = async () => {
   await app.close();

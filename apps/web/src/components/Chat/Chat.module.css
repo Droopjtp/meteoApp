@@ -204,3 +204,9 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.composerError {
+  width: calc(100% - 32px);
+  max-width: 788px;
+  margin: 0 auto;
+}

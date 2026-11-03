@@ -1,13 +1,92 @@
-import { index, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
-export const messageRole = pgEnum('message_role', ['user', 'assistant']);
+// --- Authentication (Better Auth core schema, plural table names) ---
+// Passwords never land in `users`: Better Auth stores a salted scrypt hash in `accounts.password`.
 
-export const chats = pgTable('chats', {
-  id: uuid().primaryKey().defaultRandom(),
-  title: text().notNull().default('Nouvelle conversation'),
+export const users = pgTable('users', {
+  id: text().primaryKey(),
+  name: text().notNull(),
+  email: text().notNull().unique(),
+  emailVerified: boolean().notNull().default(false),
+  image: text(),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });
+
+export const sessions = pgTable(
+  'sessions',
+  {
+    id: text().primaryKey(),
+    token: text().notNull().unique(),
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    expiresAt: timestamp({ withTimezone: true }).notNull(),
+    ipAddress: text(),
+    userAgent: text(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('sessions_user_id_idx').on(table.userId)],
+);
+
+export const accounts = pgTable(
+  'accounts',
+  {
+    id: text().primaryKey(),
+    accountId: text().notNull(),
+    providerId: text().notNull(),
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    accessToken: text(),
+    refreshToken: text(),
+    idToken: text(),
+    accessTokenExpiresAt: timestamp({ withTimezone: true }),
+    refreshTokenExpiresAt: timestamp({ withTimezone: true }),
+    scope: text(),
+    password: text(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('accounts_user_id_idx').on(table.userId)],
+);
+
+export const verifications = pgTable('verifications', {
+  id: text().primaryKey(),
+  identifier: text().notNull(),
+  value: text().notNull(),
+  expiresAt: timestamp({ withTimezone: true }).notNull(),
+  createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+});
+
+// --- Chats ---
+
+export const messageRole = pgEnum('message_role', ['user', 'assistant']);
+
+export const chats = pgTable(
+  'chats',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    // Nullable only for chats created before authentication existed: the first account claims them.
+    userId: text().references(() => users.id, { onDelete: 'cascade' }),
+    title: text().notNull().default('Nouvelle conversation'),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('chats_user_id_updated_at_idx').on(table.userId, table.updatedAt)],
+);
 
 export const messages = pgTable(
   'messages',

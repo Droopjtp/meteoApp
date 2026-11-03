@@ -8,6 +8,7 @@ import {
 } from '@meteo/shared';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
+import { currentUser, requireUser } from '../auth/guard.js';
 import {
   appendMessages,
   createChat,
@@ -33,14 +34,17 @@ const notFound: ApiError = {
 const apiErrorResponse = z.object({ error: z.object({ code: z.string(), message: z.string() }) });
 
 export const chatRoutes: FastifyPluginAsyncZod = async (app) => {
-  app.get('/chats', { schema: { response: { 200: z.array(chatSummarySchema) } } }, async () =>
-    listChats(app.db),
+  // Every route of this plugin requires a signed-in user.
+  app.addHook('preHandler', requireUser);
+
+  app.get(
+    '/chats',
+    { schema: { response: { 200: z.array(chatSummarySchema) } } },
+    async (request) => listChats(app.db, currentUser(request).id),
   );
 
-  app.post(
-    '/chats',
-    { schema: { response: { 201: chatSummarySchema } } },
-    async (_request, reply) => reply.code(201).send(await createChat(app.db)),
+  app.post('/chats', { schema: { response: { 201: chatSummarySchema } } }, async (request, reply) =>
+    reply.code(201).send(await createChat(app.db, currentUser(request).id)),
   );
 
   app.get(
@@ -54,7 +58,7 @@ export const chatRoutes: FastifyPluginAsyncZod = async (app) => {
     async (request, reply) => {
       const { chatId } = request.params;
       const [chat, messages, charts] = await Promise.all([
-        findChat(app.db, chatId),
+        findChat(app.db, chatId, currentUser(request).id),
         getMessages(app.db, chatId),
         getCharts(app.db, chatId),
       ]);
@@ -67,7 +71,7 @@ export const chatRoutes: FastifyPluginAsyncZod = async (app) => {
     '/chats/:chatId',
     { schema: { params: chatIdParamsSchema, response: { 204: z.null(), 404: apiErrorResponse } } },
     async (request, reply) => {
-      const deleted = await deleteChat(app.db, request.params.chatId);
+      const deleted = await deleteChat(app.db, request.params.chatId, currentUser(request).id);
       return deleted ? reply.code(204).send(null) : reply.code(404).send(notFound);
     },
   );
@@ -78,7 +82,9 @@ export const chatRoutes: FastifyPluginAsyncZod = async (app) => {
     { schema: { params: chatIdParamsSchema, body: sendMessageBodySchema } },
     async (request, reply) => {
       const { chatId } = request.params;
-      if (!(await findChat(app.db, chatId))) return reply.code(404).send(notFound);
+      if (!(await findChat(app.db, chatId, currentUser(request).id))) {
+        return reply.code(404).send(notFound);
+      }
 
       // From here on we write the raw response ourselves.
       reply.hijack();

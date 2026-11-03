@@ -17,24 +17,40 @@ function toSummary(row: typeof chats.$inferSelect): ChatSummary {
   };
 }
 
-export async function createChat(db: Db): Promise<ChatSummary> {
-  const [row] = await db.insert(chats).values({ title: DEFAULT_TITLE }).returning();
+// Every chat query is scoped by owner: another user's chat behaves as if it didn't exist.
+
+export async function createChat(db: Db, userId: string): Promise<ChatSummary> {
+  const [row] = await db.insert(chats).values({ userId, title: DEFAULT_TITLE }).returning();
   if (!row) throw new Error('Chat insert returned no row');
   return toSummary(row);
 }
 
-export async function listChats(db: Db): Promise<ChatSummary[]> {
-  const rows = await db.select().from(chats).orderBy(desc(chats.updatedAt));
+export async function listChats(db: Db, userId: string): Promise<ChatSummary[]> {
+  const rows = await db
+    .select()
+    .from(chats)
+    .where(eq(chats.userId, userId))
+    .orderBy(desc(chats.updatedAt));
   return rows.map(toSummary);
 }
 
-export async function findChat(db: Db, chatId: string): Promise<ChatSummary | null> {
-  const [row] = await db.select().from(chats).where(eq(chats.id, chatId));
+export async function findChat(
+  db: Db,
+  chatId: string,
+  userId: string,
+): Promise<ChatSummary | null> {
+  const [row] = await db
+    .select()
+    .from(chats)
+    .where(and(eq(chats.id, chatId), eq(chats.userId, userId)));
   return row ? toSummary(row) : null;
 }
 
-export async function deleteChat(db: Db, chatId: string): Promise<boolean> {
-  const deleted = await db.delete(chats).where(eq(chats.id, chatId)).returning({ id: chats.id });
+export async function deleteChat(db: Db, chatId: string, userId: string): Promise<boolean> {
+  const deleted = await db
+    .delete(chats)
+    .where(and(eq(chats.id, chatId), eq(chats.userId, userId)))
+    .returning({ id: chats.id });
   return deleted.length > 0;
 }
 

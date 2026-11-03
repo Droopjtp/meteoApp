@@ -2,7 +2,9 @@ import type { ChatStreamEvent, MessagePart } from '@meteo/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { chatKeys } from '../api/chats';
+import { HttpError } from '../api/http';
 import { streamMessage } from '../api/stream';
+import { refreshSession } from '../auth/client';
 
 export interface ToolStatus {
   id: string;
@@ -89,6 +91,7 @@ export function useChatStream() {
           abort.signal,
         );
       } catch (err) {
+        if (err instanceof HttpError && err.status === 401) refreshSession();
         if (!abort.signal.aborted) {
           setError({ chatId, message: err instanceof Error ? err.message : 'Erreur réseau.' });
         }

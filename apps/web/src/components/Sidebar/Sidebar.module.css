@@ -25,8 +25,10 @@
 
 .list {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 2px;
+  min-height: 0;
   overflow-y: auto;
 }
 
@@ -88,5 +90,48 @@
 
 .delete:hover {
   background: var(--color-border);
+  color: var(--color-text);
+}
+
+.account {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 8px 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.accountInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.accountName {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.accountEmail {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.signOut {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.signOut:hover {
   color: var(--color-text);
 }

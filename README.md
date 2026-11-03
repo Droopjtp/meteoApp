@@ -10,6 +10,7 @@ Chat with an LLM about live weather data — answers come back as charts in the 
 - Heating & cooling degree days (base 18 °C), relevant for building energy needs
 - Out-of-range requests (beyond 16 days, before 1940, unknown place) handled gracefully: the LLM explains and suggests an alternative
 - Chat history: new chat, list, delete, deep links (`/c/:chatId`)
+- Accounts (email + password): each user only sees their own chats
 
 ## How it works
 
@@ -43,6 +44,7 @@ React ──POST /api/chats/:id/messages──▶ Fastify ──stream──▶ 
 | Front    | Vite, React 19, TypeScript, CSS Modules, TanStack Query     |
 | Back     | Fastify 5, TypeScript, Zod (validation + typed routes)      |
 | Database | PostgreSQL 18, Drizzle ORM (migrations run on API startup)  |
+| Auth     | Better Auth (email + password, cookie sessions)             |
 | LLM      | Claude (Anthropic API) with tool use                        |
 | Weather  | [Open-Meteo](https://open-meteo.com/) (forecast + archive)  |
 | Tooling  | ESLint, Prettier, Vitest, Docker Compose                    |
@@ -61,10 +63,24 @@ Without any of them the app still starts (with a warning in the API logs), `GET 
 
 > A claude.ai / Claude Code subscription login is deliberately not used: Anthropic doesn't allow third-party apps to rely on it.
 
+## Authentication
+
+[Better Auth](https://www.better-auth.com/), self-hosted in the Fastify API (`/api/auth/*`), users and sessions in our own Postgres (Drizzle adapter).
+
+- **Passwords**: never stored in clear: salted scrypt hash in `accounts.password`; 8 to 128 characters.
+- **Sessions**: random token in an `HttpOnly; SameSite=Lax` cookie signed with `BETTER_AUTH_SECRET` (7 days). The front and the API share one origin (nginx / Vite proxy): no CORS, no token in JavaScript, and the SSE stream is authenticated by the same cookie.
+- **CSRF**: Better Auth rejects auth requests from untrusted origins (`BETTER_AUTH_URL`).
+- **Authorization**: a `preHandler` hook (`requireUser`) guards every `/api/chats` route (401 without a valid session), and every query is scoped by `user_id`: another user's chat answers **404**, as if it didn't exist.
+- **Existing data**: chats created before authentication have no owner; the first account created claims them.
+- The front shows a sign-in / sign-up screen; any 401 (expired or revoked session) brings it back.
+
+Not done yet (needs an email provider): email verification and password reset. OAuth providers (GitHub, Google) are a few lines in `apps/api/src/auth/auth.ts` once the app has a public callback URL.
+
 ## Run with Docker
 
 ```bash
-cp .env.example .env   # then set your Anthropic credentials
+make env               # creates .env and generates BETTER_AUTH_SECRET
+# then set your Anthropic credentials in .env
 docker compose up --build
 ```
 
@@ -77,7 +93,8 @@ A `Makefile` wraps the Docker Compose commands (`make up`, `make down`, `make re
 Requires Node 24 (`nvm use`) and pnpm (`corepack enable pnpm`).
 
 ```bash
-cp .env.example .env   # then set your Anthropic credentials
+make env               # creates .env and generates BETTER_AUTH_SECRET
+# then set your Anthropic credentials in .env
 pnpm install
 make dev               # starts the DB container, then `pnpm dev`
 ```

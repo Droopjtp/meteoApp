@@ -24,6 +24,8 @@ services:
       # Optional: without credentials the app starts and the UI explains how to configure them.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ANTHROPIC_AUTH_TOKEN: ${ANTHROPIC_AUTH_TOKEN:-}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Run make env to generate BETTER_AUTH_SECRET in .env}
+      BETTER_AUTH_URL: http://localhost:8080
     depends_on:
       db:
         condition: service_healthy
