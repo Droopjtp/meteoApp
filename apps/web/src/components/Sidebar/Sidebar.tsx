@@ -1,16 +1,34 @@
+import type { Ref } from 'react';
 import { useChats, useDeleteChat } from '../../api/chats';
 import { ProfileMenu } from '../ProfileMenu/ProfileMenu';
 import styles from './Sidebar.module.css';
 
 interface SidebarProps {
+  ref?: Ref<HTMLElement>;
+  id?: string;
+  className?: string;
+  inert?: boolean;
   activeChatId: string | null;
   onSelect: (chatId: string | null) => void;
   user: { name: string; email: string };
   onSettings: () => void;
   onSignOut: () => void;
+  /** Mobile drawer only: shows a close button. */
+  onClose?: () => void;
 }
 
-export function Sidebar({ activeChatId, onSelect, user, onSettings, onSignOut }: SidebarProps) {
+export function Sidebar({
+  ref,
+  id,
+  className,
+  inert,
+  activeChatId,
+  onSelect,
+  user,
+  onSettings,
+  onSignOut,
+  onClose,
+}: SidebarProps) {
   const { data: chats, isPending, isError } = useChats();
   const deleteChat = useDeleteChat();
 
@@ -24,8 +42,28 @@ export function Sidebar({ activeChatId, onSelect, user, onSettings, onSignOut }:
   };
 
   return (
-    <aside className={styles.sidebar}>
-      <ProfileMenu user={user} onSettings={onSettings} onSignOut={onSignOut} />
+    <aside
+      ref={ref}
+      id={id}
+      className={className ? `${styles.sidebar} ${className}` : styles.sidebar}
+      inert={inert}
+      aria-label="Conversations et profil"
+    >
+      <div className={styles.top}>
+        <div className={styles.profile}>
+          <ProfileMenu user={user} onSettings={onSettings} onSignOut={onSignOut} />
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            className={styles.close}
+            onClick={onClose}
+            aria-label="Fermer le menu"
+          >
+            ×
+          </button>
+        )}
+      </div>
 
       <button type="button" className={styles.newChat} onClick={() => onSelect(null)}>
         + Nouvelle conversation

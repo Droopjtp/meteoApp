@@ -130,3 +130,10 @@
   background: #fdf1f1;
   color: #9b2c2c;
 }
+
+/* Below 16px iOS Safari zooms into the field on focus. */
+@media (max-width: 767px) {
+  .field input {
+    font-size: 16px;
+  }
+}

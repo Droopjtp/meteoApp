@@ -210,3 +210,44 @@
   max-width: 788px;
   margin: 0 auto;
 }
+
+/* --- Mobile --- */
+@media (max-width: 767px) {
+  .messages {
+    gap: 12px;
+    padding: 16px 12px;
+  }
+
+  .userMessage {
+    max-width: 88%;
+  }
+
+  .composer {
+    padding: 8px 12px max(12px, env(safe-area-inset-bottom));
+  }
+
+  /* Below 16px iOS Safari zooms into the field on focus. */
+  .input {
+    font-size: 16px;
+  }
+
+  .sendButton {
+    padding: 0 14px;
+  }
+
+  .empty {
+    padding: 32px 16px 16px;
+  }
+
+  .emptyTitle {
+    font-size: 1.25rem;
+  }
+
+  .suggestions {
+    grid-template-columns: 1fr;
+  }
+
+  .composerError {
+    width: calc(100% - 24px);
+  }
+}

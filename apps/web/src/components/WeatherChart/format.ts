@@ -35,20 +35,27 @@ function hourlyStep(dayCount: number): number {
  * Explicit hourly ticks aligned on midnight: the axis always shows which day it is,
  * instead of letting the chart library pick arbitrary hours.
  */
-export function hourlyTicks(times: string[]): string[] {
-  const step = hourlyStep(times.length / 24);
+export function hourlyTicks(times: string[], compact = false): string[] {
+  // Narrow charts get half as many ticks.
+  const step = hourlyStep(times.length / 24) * (compact ? 2 : 1);
   if (step <= 24) return times.filter((time) => hourOf(time) % step === 0);
   // Every other midnight, counted from the first day.
   return times.filter(isMidnight).filter((_, index) => index % (step / 24) === 0);
 }
 
-export function formatTick(time: string, granularity: Granularity, pointCount: number): string {
+export function formatTick(
+  time: string,
+  granularity: Granularity,
+  pointCount: number,
+  compact = false,
+): string {
   if (granularity === 'hourly') {
     if (!isMidnight(time)) return `${hourOf(time)}h`;
     const date = toDate(time.slice(0, 10));
-    return pointCount <= 5 * 24 ? dayFormat.format(date) : shortDayFormat.format(date);
+    return pointCount <= 5 * 24 && !compact ? dayFormat.format(date) : shortDayFormat.format(date);
   }
-  return pointCount > 14 ? shortDayFormat.format(toDate(time)) : dayFormat.format(toDate(time));
+  const date = toDate(time);
+  return pointCount > 14 || compact ? shortDayFormat.format(date) : dayFormat.format(date);
 }
 
 export function formatTooltipTime(time: string, granularity: Granularity): string {

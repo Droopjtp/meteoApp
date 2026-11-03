@@ -33,7 +33,7 @@ export function Composer({ onSend, onStop, isStreaming, disabled }: ComposerProp
         value={text}
         onChange={(event) => setText(event.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Ex. : Comment vont évoluer les températures à Lyon cette semaine ?"
+        placeholder="Posez votre question météo…"
         rows={1}
         maxLength={2000}
         aria-label="Votre message"

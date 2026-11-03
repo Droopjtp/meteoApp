@@ -37,6 +37,19 @@ describe('hourlyTicks', () => {
   });
 });
 
+describe('compact charts', () => {
+  it('halve the hourly ticks and shorten the dates', () => {
+    expect(hourlyTicks(hours('2026-11-03', 2), true).map((t) => t.slice(11, 13))).toEqual([
+      '00',
+      '12',
+      '00',
+      '12',
+    ]);
+    expect(formatTick('2026-11-04T00:00', 'hourly', 48, true)).toBe('4 nov.');
+    expect(formatTick('2026-11-04', 'daily', 7, true)).toBe('4 nov.');
+  });
+});
+
 describe('formatTick', () => {
   it('shows the date at midnight and the hour otherwise', () => {
     expect(formatTick('2026-11-04T00:00', 'hourly', 48)).toBe('mer. 4 nov.');

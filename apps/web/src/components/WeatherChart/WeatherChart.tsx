@@ -1,5 +1,5 @@
 import type { ResolvedChart } from '@meteo/shared';
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import {
   Area,
   Bar,
@@ -20,6 +20,7 @@ import {
   hourlyTicks,
   isMidnight,
 } from './format';
+import { useElementWidth } from '../../hooks/useElementWidth';
 import { CHART_INK, seriesColor } from './palette';
 import styles from './WeatherChart.module.css';
 
@@ -57,10 +58,11 @@ interface TimeTickProps {
   payload?: { value: string };
   granularity: ResolvedChart['granularity'];
   pointCount: number;
+  compact: boolean;
 }
 
 /** Midnight ticks carry the date: slightly stronger ink than the hours. */
-function TimeTick({ x, y, payload, granularity, pointCount }: TimeTickProps) {
+function TimeTick({ x, y, payload, granularity, pointCount, compact }: TimeTickProps) {
   if (!payload) return null;
   const strong = granularity === 'hourly' && isMidnight(payload.value);
   return (
@@ -73,7 +75,7 @@ function TimeTick({ x, y, payload, granularity, pointCount }: TimeTickProps) {
       fill={strong ? CHART_INK.secondary : CHART_INK.muted}
       fontWeight={strong ? 600 : 400}
     >
-      {formatTick(payload.value, granularity, pointCount)}
+      {formatTick(payload.value, granularity, pointCount, compact)}
     </text>
   );
 }
@@ -179,11 +181,18 @@ function WeatherChartImpl({ chart }: { chart: ResolvedChart }) {
     [chart.points],
   );
 
-  const panelHeight = panels.length > 1 ? 180 : 260;
+  // Sized from the chart's own width (sidebar open or not, phone or desktop).
+  const figureRef = useRef<HTMLElement>(null);
+  const width = useElementWidth(figureRef);
+  const compact = width > 0 && width < 480;
+  const panelHeight = panels.length > 1 ? (compact ? 150 : 180) : compact ? 220 : 260;
   const pointCount = chart.points.length;
   const hourly = chart.granularity === 'hourly';
   const times = useMemo(() => chart.points.map((p) => String(p.time)), [chart.points]);
-  const ticks = useMemo(() => (hourly ? hourlyTicks(times) : undefined), [hourly, times]);
+  const ticks = useMemo(
+    () => (hourly ? hourlyTicks(times, compact) : undefined),
+    [hourly, times, compact],
+  );
   // Day separators on hourly charts (the first day starts at the left edge).
   const dayStarts = useMemo(
     () => (hourly ? times.filter(isMidnight).slice(1) : []),
@@ -191,7 +200,7 @@ function WeatherChartImpl({ chart }: { chart: ResolvedChart }) {
   );
 
   return (
-    <figure className={styles.figure}>
+    <figure ref={figureRef} className={styles.figure}>
       <figcaption className={styles.title}>{chart.title}</figcaption>
       {series.length > 1 && <Legend series={series} />}
 
@@ -211,14 +220,19 @@ function WeatherChartImpl({ chart }: { chart: ResolvedChart }) {
                 ticks={ticks}
                 interval={hourly ? 0 : 'preserveEnd'}
                 tick={(props) => (
-                  <TimeTick {...props} granularity={chart.granularity} pointCount={pointCount} />
+                  <TimeTick
+                    {...props}
+                    granularity={chart.granularity}
+                    pointCount={pointCount}
+                    compact={compact}
+                  />
                 )}
                 stroke={CHART_INK.axis}
                 tickLine={false}
                 minTickGap={24}
               />
               <YAxis
-                width={48}
+                width={compact ? 36 : 48}
                 tick={{ fill: CHART_INK.muted, fontSize: 12 }}
                 tickFormatter={formatAxisValue}
                 axisLine={false}

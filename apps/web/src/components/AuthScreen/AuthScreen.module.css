@@ -112,3 +112,10 @@
   opacity: 0.6;
   cursor: wait;
 }
+
+/* Below 16px iOS Safari zooms into the field on focus. */
+@media (max-width: 767px) {
+  .field input {
+    font-size: 16px;
+  }
+}

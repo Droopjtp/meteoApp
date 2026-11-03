@@ -8,6 +8,35 @@
   background: var(--color-surface);
 }
 
+.top {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.profile {
+  flex: 1;
+  min-width: 0;
+}
+
+.close {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.close:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
 .newChat {
   padding: 10px 12px;
   border: 1px solid var(--color-border);
@@ -91,4 +120,11 @@
 .delete:hover {
   background: var(--color-border);
   color: var(--color-text);
+}
+
+/* Touch screens have no hover: keep the delete button visible. */
+@media (hover: none) {
+  .delete {
+    opacity: 1;
+  }
 }

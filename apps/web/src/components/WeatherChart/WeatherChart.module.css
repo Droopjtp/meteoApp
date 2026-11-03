@@ -124,3 +124,9 @@
   background: #fff;
   font-weight: 600;
 }
+
+@media (max-width: 767px) {
+  .figure {
+    padding: 12px 10px 10px;
+  }
+}
