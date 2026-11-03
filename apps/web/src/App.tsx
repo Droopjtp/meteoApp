@@ -4,12 +4,13 @@ import { authClient } from './auth/client';
 import { AuthScreen } from './components/AuthScreen/AuthScreen';
 import { ChatView } from './components/Chat/ChatView';
 import { LlmStatusBanner } from './components/LlmStatusBanner/LlmStatusBanner';
+import { SettingsPage } from './components/SettingsPage/SettingsPage';
 import { Sidebar } from './components/Sidebar/Sidebar';
-import { useChatRoute } from './hooks/useChatRoute';
+import { useRoute } from './hooks/useRoute';
 
 export function App() {
   const { data: session, isPending } = authClient.useSession();
-  const { chatId, navigate } = useChatRoute();
+  const { route, navigate, openChat } = useRoute();
   const queryClient = useQueryClient();
 
   if (isPending) return null;
@@ -19,15 +20,29 @@ export function App() {
     await authClient.signOut();
     // Don't leave the previous user's chats in the cache.
     queryClient.clear();
-    navigate(null);
+    openChat(null);
   };
+
+  const chatId = route.page === 'chat' ? route.chatId : null;
 
   return (
     <div className={styles.layout}>
-      <Sidebar activeChatId={chatId} onSelect={navigate} user={session.user} onSignOut={signOut} />
+      <Sidebar
+        activeChatId={chatId}
+        onSelect={openChat}
+        user={session.user}
+        onSettings={() => navigate({ page: 'settings' })}
+        onSignOut={signOut}
+      />
       <main className={styles.main}>
-        <LlmStatusBanner />
-        <ChatView chatId={chatId} navigate={navigate} />
+        {route.page === 'settings' ? (
+          <SettingsPage user={session.user} onBack={() => openChat(null)} />
+        ) : (
+          <>
+            <LlmStatusBanner />
+            <ChatView chatId={chatId} navigate={openChat} />
+          </>
+        )}
       </main>
     </div>
   );

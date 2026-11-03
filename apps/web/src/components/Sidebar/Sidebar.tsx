@@ -1,14 +1,16 @@
 import { useChats, useDeleteChat } from '../../api/chats';
+import { ProfileMenu } from '../ProfileMenu/ProfileMenu';
 import styles from './Sidebar.module.css';
 
 interface SidebarProps {
   activeChatId: string | null;
   onSelect: (chatId: string | null) => void;
   user: { name: string; email: string };
+  onSettings: () => void;
   onSignOut: () => void;
 }
 
-export function Sidebar({ activeChatId, onSelect, user, onSignOut }: SidebarProps) {
+export function Sidebar({ activeChatId, onSelect, user, onSettings, onSignOut }: SidebarProps) {
   const { data: chats, isPending, isError } = useChats();
   const deleteChat = useDeleteChat();
 
@@ -23,6 +25,8 @@ export function Sidebar({ activeChatId, onSelect, user, onSignOut }: SidebarProp
 
   return (
     <aside className={styles.sidebar}>
+      <ProfileMenu user={user} onSettings={onSettings} onSignOut={onSignOut} />
+
       <button type="button" className={styles.newChat} onClick={() => onSelect(null)}>
         + Nouvelle conversation
       </button>
@@ -57,16 +61,6 @@ export function Sidebar({ activeChatId, onSelect, user, onSignOut }: SidebarProp
           </div>
         ))}
       </nav>
-
-      <footer className={styles.account}>
-        <div className={styles.accountInfo}>
-          <span className={styles.accountName}>{user.name}</span>
-          <span className={styles.accountEmail}>{user.email}</span>
-        </div>
-        <button type="button" className={styles.signOut} onClick={onSignOut}>
-          Se déconnecter
-        </button>
-      </footer>
     </aside>
   );
 }
