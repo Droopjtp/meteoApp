@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router';
 import { useChat, useCreateChat } from '../../api/chats';
 import { HttpError } from '../../api/http';
 import { useLlmStatus } from '../../api/llm';
-import { type ToolStatus, useChatStream } from '../../hooks/useChatStream';
+import { type ChatStream, type ToolStatus } from '../../hooks/useChatStream';
 import styles from './Chat.module.css';
 import { Composer } from './Composer';
 import { EmptyState } from './EmptyState';
@@ -10,7 +11,8 @@ import { Message } from './Message';
 
 interface ChatViewProps {
   chatId: string | null;
-  navigate: (chatId: string | null) => void;
+  /** Owned by the layout so that an answer keeps streaming across route changes. */
+  stream: ChatStream;
 }
 
 function ToolStatuses({ tools }: { tools: ToolStatus[] }) {
@@ -27,21 +29,17 @@ function ToolStatuses({ tools }: { tools: ToolStatus[] }) {
   );
 }
 
-export function ChatView({ chatId, navigate }: ChatViewProps) {
+export function ChatView({ chatId, stream }: ChatViewProps) {
   const { data, isError, isPending: isLoading } = useChat(chatId);
   const createChat = useCreateChat();
-  const { pending, error, send, stop } = useChatStream();
+  const { pending, error, send, stop } = stream;
+  const navigate = useNavigate();
   const llmStatus = useLlmStatus();
   const endRef = useRef<HTMLDivElement>(null);
 
   const visiblePending = pending?.chatId === chatId ? pending : null;
   const visibleError = error?.chatId === chatId ? error : null;
   const messages = chatId ? (data?.messages ?? []) : [];
-
-  // Leaving a chat while it streams: stop generating (the server stops too).
-  useEffect(() => {
-    if (pending && pending.chatId !== chatId) stop();
-  }, [chatId, pending, stop]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end' });
@@ -55,7 +53,7 @@ export function ChatView({ chatId, navigate }: ChatViewProps) {
       } catch {
         return; // Shown below (a 401 sends the user back to the sign-in screen instead).
       }
-      navigate(targetId);
+      navigate(`/c/${targetId}`);
     }
     void send(targetId, text);
   };

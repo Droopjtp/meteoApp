@@ -38,7 +38,9 @@
 }
 
 .newChat {
+  display: block;
   padding: 10px 12px;
+  text-decoration: none;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   background: transparent;
@@ -83,7 +85,9 @@
 }
 
 .itemTitle {
+  display: block;
   flex: 1;
+  text-decoration: none;
   min-width: 0;
   padding: 8px;
   overflow: hidden;

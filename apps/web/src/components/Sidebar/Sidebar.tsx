@@ -1,4 +1,5 @@
 import type { Ref } from 'react';
+import { Link, NavLink, useNavigate } from 'react-router';
 import { useChats, useDeleteChat } from '../../api/chats';
 import { ProfileMenu } from '../ProfileMenu/ProfileMenu';
 import styles from './Sidebar.module.css';
@@ -9,7 +10,8 @@ interface SidebarProps {
   className?: string;
   inert?: boolean;
   activeChatId: string | null;
-  onSelect: (chatId: string | null) => void;
+  /** Called after following a link (closes the mobile drawer). */
+  onNavigate: () => void;
   user: { name: string; email: string };
   onSettings: () => void;
   onSignOut: () => void;
@@ -23,7 +25,7 @@ export function Sidebar({
   className,
   inert,
   activeChatId,
-  onSelect,
+  onNavigate,
   user,
   onSettings,
   onSignOut,
@@ -31,12 +33,13 @@ export function Sidebar({
 }: SidebarProps) {
   const { data: chats, isPending, isError } = useChats();
   const deleteChat = useDeleteChat();
+  const navigate = useNavigate();
 
   const handleDelete = (chatId: string, title: string) => {
     if (!window.confirm(`Supprimer la conversation « ${title} » ?`)) return;
     deleteChat.mutate(chatId, {
       onSuccess: () => {
-        if (chatId === activeChatId) onSelect(null);
+        if (chatId === activeChatId) navigate('/');
       },
     });
   };
@@ -65,9 +68,9 @@ export function Sidebar({
         )}
       </div>
 
-      <button type="button" className={styles.newChat} onClick={() => onSelect(null)}>
+      <Link to="/" className={styles.newChat} onClick={onNavigate}>
         + Nouvelle conversation
-      </button>
+      </Link>
 
       <nav className={styles.list} aria-label="Conversations">
         {isPending && <p className={styles.hint}>Chargement…</p>}
@@ -78,15 +81,15 @@ export function Sidebar({
             key={chat.id}
             className={chat.id === activeChatId ? `${styles.item} ${styles.active}` : styles.item}
           >
-            <button
-              type="button"
+            {/* Real links: middle click, "open in a new tab" and "copy link" work. */}
+            <NavLink
+              to={`/c/${chat.id}`}
               className={styles.itemTitle}
-              onClick={() => onSelect(chat.id)}
-              aria-current={chat.id === activeChatId ? 'page' : undefined}
+              onClick={onNavigate}
               title={chat.title}
             >
               {chat.title}
-            </button>
+            </NavLink>
             <button
               type="button"
               className={styles.delete}

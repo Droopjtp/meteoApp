@@ -1,11 +1,11 @@
 import { type FormEvent, useState } from 'react';
+import { Link } from 'react-router';
 import { authClient, authErrorMessage } from '../../auth/client';
 import { setThemePreference, type ThemePreference, useTheme } from '../../theme/theme';
 import styles from './SettingsPage.module.css';
 
 interface SettingsPageProps {
   user: { name: string; email: string; createdAt: Date };
-  onBack: () => void;
 }
 
 type Status = { kind: 'success' | 'error'; message: string } | null;
@@ -153,13 +153,13 @@ function AppearanceForm() {
 
 const dateFormat = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' });
 
-export function SettingsPage({ user, onBack }: SettingsPageProps) {
+export function SettingsPage({ user }: SettingsPageProps) {
   return (
     <div className={styles.page}>
       <div className={styles.content}>
-        <button type="button" className={styles.back} onClick={onBack}>
+        <Link to="/" className={styles.back}>
           ← Retour aux conversations
-        </button>
+        </Link>
         <h1 className={styles.title}>Paramètres du profil</h1>
 
         <section className={styles.card} aria-labelledby="account-heading">

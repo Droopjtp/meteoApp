@@ -1,0 +1,25 @@
+.page {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.text {
+  margin: 0 0 8px;
+  color: var(--color-text-muted);
+}
+
+.link {
+  color: var(--color-accent);
+  font-weight: 600;
+}
